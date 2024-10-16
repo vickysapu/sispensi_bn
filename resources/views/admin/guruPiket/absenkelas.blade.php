@@ -1,147 +1,246 @@
 @extends('layout.masterFile')
 @section('content')
-<div class="content-wrapper">
-    <div class="content-header">
-        <div class="container-fluid">
-            <div class="row mb-2">
-                <div class="col-sm-6">
-                    <h1 class="m-0">
-                        <span>
-                            <a href="{{ route(name: 'absensi.index') }}" class="text-decoration-none text-dark hover-link text-primary">
-                                <i class="fa fa-arrow-left"></i>
-                            </a>
-                        </span>
-                        Data Absen Kelas {{ $walikelas->kelas }} {{ $walikelas->jurusan->nama_jurusan }}
-                    </h1>
-                </div>
-                <section class="content mt-4">
-                    <div class="container-fluid">
-                        @php
-                        use Carbon\Carbon;
-                        @endphp
+    <div class="content-wrapper">
+        <div class="content-header">
+            <div class="container-fluid">
+                <div class="row mb-2">
+                    <div class="col-sm-6">
+                        <h1 class="m-0">
+                            @if (session('datawalikelas'))
+                            @else
+                                <span>
+                                    <a href="{{ route('absensi.index') }}"
+                                        class="text-decoration-none text-dark hover-link text-primary">
+                                        <i class="fa fa-arrow-left"></i>
+                                    </a>
+                                </span>
+                            @endif
 
-                        <div class="container mt-3">
-                            <h2>Absensi Kelas {{ $walikelas->kelas }} {{ $walikelas->jurusan->nama_jurusan }}</h2>
-                            <p><strong>Nama Walikelas:</strong> {{ $walikelas->nama_walikelas }}</p>
-                            @foreach($datatahunpelajaran as $data)
-                                <p><strong>Tahun Pelajaran:</strong> {{ $data->tahunmulai }}/{{ $data->tahunselesai }} - 
-                                @if ($data->semester == 1)
-                                    Ganjil
-                                @elseif ($data->semester ==2)
-                                    Genap
-                                @endif
-                                </p>
-                            @endforeach
-                            <p><strong>Bulan:</strong> {{ Carbon::now()->isoFormat('MMMM YYYY') }}</p>
-
-                            <div style="overflow-x: auto;" class="mt-3">
-                                <table class="table table-bordered text-center">
-                                    <thead>
-                                        <tr>
-                                            <th scope="col" rowspan="2" style="text-align: center; vertical-align: middle;">Nama Siswa</th>
-                                            <th scope="col" rowspan="2" style="text-align: center; vertical-align: middle;">NIS</th>
-                                            <th scope="col" rowspan="2" style="text-align: center; vertical-align: middle;">L/P</th>
-                                            <th scope="col" colspan="{{ $totalDays }}">Tanggal</th>
-                                            <th scope="col" colspan="3" style="text-align: center; vertical-align: middle;">Jumlah</th>
-                                        <tr>
-                                            @for ($day = 1; $day <= $totalDays; $day++)
-                                                @php
-                                                $date=Carbon::create($currentYear, $currentMonth, $day);
-                                                $isWeekend=$date->isWeekend();
-                                                @endphp
-                                                <th scope="col" style="{{ $isWeekend ? 'background-color: #F55050; color: white;' : '' }}">
-                                                    {{ str_pad($day, 2, '0', STR_PAD_LEFT) }}
-                                                </th>
-                                                @endfor
-                                                <th scope="col" style="background-color: green; color: white;">H</th>
-                                                <th scope="col" style="background-color: #A02334; color: white;">A</th>
-                                                <th scope="col" style="background-color: #4D96FF; color: white;">S</th>
-                                                <th scope="col" style="background-color: #FCCD2A; color: black;">I</th>
-                                        </tr>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        @foreach ($students as $siswa)
-                                        <tr>
-                                            <th scope="row">{{ $siswa->nama_siswa }}</th>
-                                            <td>{{ $siswa->nis }}</td>
-                                            <td>{{ $siswa->jenis_kelamin === 'Laki-Laki' ? 'L' : 'P' }}</td>
-                                            @for ($day = 1; $day <= $totalDays; $day++)
-                                                @php
-                                                $date=Carbon::create($currentYear, $currentMonth, $day);
-                                                $isWeekend=$date->isWeekend();
-                                                @endphp
-                                                <td style="{{ $isWeekend ? 'background-color: #F55050; color: white;' : '' }}">
-                                                    @if (isset($attendanceData[$siswa->nama_siswa][$day]))
-                                                    @if ($attendanceData[$siswa->nama_siswa][$day] === 'Hadir')
-                                                    <span style="color: white; background : green; padding : 5px; border-radius : 2px; width : 5px; height : 5px;">H</span>
-                                                    @elseif ($attendanceData[$siswa->nama_siswa][$day] === 'Tidak Hadir')
-                                                    <span style="color: white; background : #A02334; padding : 5px; border-radius : 2px;">A</span>
-                                                    @elseif ($attendanceData[$siswa->nama_siswa][$day] === 'Sakit')
-                                                    <span style="color: white; background : #4D96FF; padding : 5px; border-radius : 2px;">S</span>
-                                                    @elseif ($attendanceData[$siswa->nama_siswa][$day] === 'Izin')
-                                                    <span style="color: black; background : #FCCD2A; padding : 5px; border-radius : 2px;">I</span>
-                                                    @endif
-                                                    @elseif (!$isWeekend)
-                                                    <span></span>
-                                                    @endif
-                                                </td>
-
-                                                @endfor
-                                                @php
-                                                $totalHadir = 0;
-                                                $totalTidakHadir = 0;
-                                                $totalSakit = 0;
-                                                $totalIzin = 0;
-
-                                                if (isset($attendanceData[$siswa->nama_siswa])) {
-                                                $totalHadir = count(array_filter($attendanceData[$siswa->nama_siswa], fn($status) => $status === 'Hadir'));
-                                                $totalTidakHadir = count(array_filter($attendanceData[$siswa->nama_siswa], fn($status) => $status === 'Tidak Hadir'));
-                                                $totalSakit = count(array_filter($attendanceData[$siswa->nama_siswa], fn($status) => $status === 'Sakit'));
-                                                $totalIzin = count(array_filter($attendanceData[$siswa->nama_siswa], fn($status) => $status === 'Izin'));
-                                                }
-                                                @endphp
-
-                                                <td>
-                                                    <span style="color: black; padding: 5px; border-radius: 2px;">
-                                                        {{ $totalHadir > 0 ? $totalHadir : '' }}
-                                                    </span>
-                                                </td>
-                                                <td>
-                                                    <span style="color: black; padding: 5px; border-radius: 2px;">
-                                                        {{ $totalTidakHadir > 0 ? $totalTidakHadir : '' }}
-                                                    </span>
-                                                </td>
-                                                <td>
-                                                    <span style="color: black; padding: 5px; border-radius: 2px;">
-                                                        {{ $totalSakit > 0 ? $totalSakit : '' }}
-                                                    </span>
-                                                </td>
-                                                <td>
-                                                    <span style="color: black; padding: 5px; border-radius: 2px;">
-                                                        {{ $totalIzin > 0 ? $totalIzin : '' }}
-                                                    </span>
-                                                </td>
-                                        </tr>
-                                        @endforeach
-                                    </tbody>
-                                </table>
-                            </div>
-
-                            <div class="mt-3 mb-3">
-                                <p><strong>Keterangan:</strong></p>
-                                <p><span class="badge" style="background-color : green;">H = Hadir</span></p>
-                                <p><span class="badge" style="background-color : #A02334;">A = Tidak Hadir</span></p>
-                                <p><span class="badge" style="background-color : #4D96FF;">S = Sakit</span></p>
-                                <p><span class="badge" style="background-color : #FCCD2A; color : black;">I = Izin</span></p>
-                            </div>
-                        </div>
-
+                            Data Absen Kelas {{ $walikelas->kelas }} {{ $walikelas->jurusan->nama_jurusan }}
+                        </h1>
+                        @if (session('datawalikelas'))
+                            <a href="{{ route('generate.pdfwalikelas', session('datawalikelas')->id) }}"
+                                class="btn btn-success mt-4">Unduh absen</a>
+                        @else
+                            <a href="{{ route('generate.pdfwalikelas', $walikelas->id) }}   "
+                                class="btn btn-success mt-4">Unduh absen</a>
+                        @endif
                     </div>
-                </section>
+                </div>
             </div>
         </div>
+
+        <section class="content mt-4" id="pdf">
+            <div class="container-fluid">
+                @php
+                    use Carbon\Carbon;
+                @endphp
+
+                <div class="container mt-3">
+                    <h2>Absensi Kelas {{ $walikelas->kelas }} {{ $walikelas->jurusan->nama_jurusan }}</h2>
+                    <p><strong>Nama Walikelas:</strong> {{ $walikelas->nama_walikelas }}</p>
+
+                    @if ($datatahunpelajaran)
+                        <p><strong>Tahun Pelajaran:</strong>
+                            {{ $datatahunpelajaran->tahunmulai }}/{{ $datatahunpelajaran->tahunselesai }} -
+                            @if ($datatahunpelajaran->semester == 1)
+                                Ganjil
+                            @else
+                                Genap
+                            @endif
+                        </p>
+                    @else
+                        <p>Tahun pelajaran tidak tersedia.</p>
+                    @endif
+
+
+                    <p><strong>Bulan:</strong> {{ Carbon::now()->isoFormat('MMMM YYYY') }}</p>
+
+                    <!-- Tabel Absensi -->
+                    <div class="table-responsive mt-3">
+                        <style>
+                            .table th,
+                            .table td {
+                                padding: 0.1rem;
+                                /* Ubah sesuai kebutuhan */
+                            }
+                        </style>
+
+                        <table class="table table-bordered table-responsive" style="font-size: 12px;">
+                            <thead class="text-center">
+                                <tr>
+                                    @php
+                                        $no = 1;
+                                    @endphp
+                                    <th rowspan="2" class="text-nowrap" style="width: 50px;">No</th>
+                                    <th rowspan="2" class="text-nowrap" style="width: 100px;">Nama Siswa</th>
+                                    <!-- Lebar 100px -->
+                                    <th rowspan="2" class="text-nowrap" style="width: 100px;">NIS</th>
+                                    <th rowspan="2" class="text-nowrap" style="width: 50px;">L/P</th>
+                                    <th colspan="{{ $totalDays }}">Tanggal</th>
+                                    <th colspan="4">Jumlah</th>
+                                </tr>
+                                <tr>
+                                    @for ($day = 1; $day <= $totalDays; $day++)
+                                        @php
+                                            $date = Carbon::create($currentYear, $currentMonth, $day);
+                                            $isWeekend = $date->isWeekend();
+                                        @endphp
+                                        <th style="{{ $isWeekend ? 'background-color: #F55050; color: white;' : '' }}">
+                                            {{ str_pad($day, 2, '0', STR_PAD_LEFT) }}
+                                        </th>
+                                    @endfor
+                                    <th style="background-color: #28a745; color: white;">H</th>
+                                    <th style="background-color: #dc3545; color: white;">A</th>
+                                    <th style="background-color: #17a2b8; color: white;">S</th>
+                                    <th style="background-color: #ffc107; color: black;">I</th>
+                                </tr>
+                            </thead>
+                            <tbody class="text-center">
+                                @foreach ($students as $siswa)
+                                    <tr>
+                                        <td>{{ $no++ }}</td>
+                                        <td class="text-nowrap text-left" style="width: 100px;">{{ $siswa->nama_siswa }}
+                                        </td> <!-- Lebar 100px -->
+                                        <td>{{ $siswa->nis }}</td>
+                                        <td>{{ strtolower($siswa->jenis_kelamin) === 'laki-laki' ? 'L' : 'P' }}</td>
+                                        @for ($day = 1; $day <= $totalDays; $day++)
+                                            @php
+                                                $date = Carbon::create($currentYear, $currentMonth, $day);
+                                                $isWeekend = $date->isWeekend();
+                                            @endphp
+                                            <td style="{{ $isWeekend ? 'background-color: #F55050; color: white;' : '' }}">
+                                                @if (isset($attendanceData[$siswa->nama_siswa][$day]))
+                                                    @if ($attendanceData[$siswa->nama_siswa][$day] === 'Hadir')
+                                                        <span class="text-success" style="font-size: 8px">&#10003;</span>
+                                                    @elseif ($attendanceData[$siswa->nama_siswa][$day] === 'Tidak Hadir')
+                                                        <span class="text-danger" style="font-size: 8px">&#10007;</span>
+                                                    @elseif ($attendanceData[$siswa->nama_siswa][$day] === 'Sakit')
+                                                        <span class="text-info" style="font-size: 8px">S</span>
+                                                    @elseif ($attendanceData[$siswa->nama_siswa][$day] === 'Izin')
+                                                        <span class="text-dark" style="font-size: 8px">i</span>
+                                                    @endif
+                                                @elseif (!$isWeekend)
+                                                    <span></span>
+                                                @endif
+                                            </td>
+                                        @endfor
+
+                                        <td>{{ array_count_values($attendanceData[$siswa->nama_siswa] ?? [])['Hadir'] ?? '' }}
+                                        </td>
+                                        <td>{{ array_count_values($attendanceData[$siswa->nama_siswa] ?? [])['Tidak Hadir'] ?? '' }}
+                                        </td>
+                                        <td>{{ array_count_values($attendanceData[$siswa->nama_siswa] ?? [])['Sakit'] ?? '' }}
+                                        </td>
+                                        <td>{{ array_count_values($attendanceData[$siswa->nama_siswa] ?? [])['Izin'] ?? '' }}
+                                        </td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                            <tfoot class="text-center">
+                                <tr>
+                                    <td colspan="4" class="text-left">Jumlah Siswa Seluruhnya</td>
+                                    @for ($day = 1; $day <= $totalDays; $day++)
+                                        @php
+                                            $date = Carbon::create($currentYear, $currentMonth, $day);
+                                            $isWeekend = $date->isWeekend();
+                                            $countPerDay = 0;
+
+                                            foreach ($students as $student) {
+                                                if (isset($attendanceData[$student->nama_siswa][$day])) {
+                                                    $countPerDay++;
+                                                }
+                                            }
+                                        @endphp
+
+                                        <td style="{{ $isWeekend ? 'background-color: #dc3545; color: white;' : '' }}">
+                                            @if ($isWeekend)
+                                                <strong></strong>
+                                            @else
+                                                <strong>{{ $jumalahsemuanya ? $jumalahsemuanya : '' }}</strong>
+                                            @endif
+                                        </td>
+                                    @endfor
+
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                </tr>
+
+                                <tr>
+                                    <td colspan="4" class="text-left">Jumlah Siswa Tidak Hadir</td>
+                                    @for ($day = 1; $day <= $totalDays; $day++)
+                                        @php
+                                            $isWeekend = $date->isWeekend();
+                                            $countPerDay = 0;
+                                            foreach ($students as $student) {
+                                                if (
+                                                    isset($attendanceData[$student->nama_siswa][$day]) &&
+                                                    ($attendanceData[$student->nama_siswa][$day] == 'Tidak Hadir' ||
+                                                        $attendanceData[$student->nama_siswa][$day] == 'Izin' ||
+                                                        $attendanceData[$student->nama_siswa][$day] == 'Sakit')
+                                                ) {
+                                                    $countPerDay++;
+                                                }
+                                            }
+                                        @endphp
+                                        <td style="{{ $isWeekend ? 'background-color: #dc3545; color: white;' : '' }}">
+                                            @if ($isWeekend)
+                                                <strong></strong>
+                                            @else
+                                            <strong>{{ $countPerDay ? $countPerDay : '' }}</strong>
+                                            @endif
+                                        </td>
+                                    @endfor
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                </tr>
+
+                                <tr>
+                                    <td colspan="4" class="text-left">Jumlah Siswa Hadir</td>
+                                    @for ($day = 1; $day <= $totalDays; $day++)
+                                        @php
+                                            $isWeekend = $date->isWeekend();
+                                            $countPerDay = 0;
+                                            foreach ($students as $student) {
+                                                if (
+                                                    isset($attendanceData[$student->nama_siswa][$day]) &&
+                                                    $attendanceData[$student->nama_siswa][$day] == 'Hadir'
+                                                ) {
+                                                    $countPerDay++;
+                                                }
+                                            }
+                                        @endphp
+                                        <td style="{{ $isWeekend ? 'background-color: #dc3545; color: white;' : '' }}">
+                                            @if ($isWeekend)
+                                                <strong></strong>
+                                            @else
+                                            <strong>{{ $countPerDay ? $countPerDay : '' }}</strong>
+                                            @endif
+                                        </td>
+                                    @endfor
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                </tr>
+                            </tfoot>
+                        </table>
+
+                    </div>
+
+                    <div class="mt-3 mb-3">
+                        <p><strong>Keterangan:</strong></p>
+                        <p><span class="badge badge-success">H = Hadir</span></p>
+                        <p><span class="badge badge-danger">A = Tidak Hadir</span></p>
+                        <p><span class="badge badge-info">S = Sakit</span></p>
+                        <p><span class="badge badge-warning">I = Izin</span></p>
+                    </div>
+                </div>
+            </div>
+        </section>
     </div>
-    </section>
-</div>
 @endsection

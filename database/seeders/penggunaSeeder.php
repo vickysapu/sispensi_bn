@@ -2,7 +2,7 @@
 
 namespace Database\Seeders;
 
-use App\Models\penggunalogin;
+use App\Models\User;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
@@ -15,17 +15,13 @@ class penggunaSeeder extends Seeder
     {
         $penggunaData = [
             [
-                'keamanan' => 'GP7654login',
-                'role' => 'Guru Piket'
-            ],
-            [
-                'keamanan' => 'kesiswaan73645',
-                'role' => 'Guru Piket'
+                'password' => 'KS00199',
+                'username' => 'Kesiswaan'
             ],
         ];
 
         foreach($penggunaData as $data => $val) {
-            penggunalogin::create($val);
+            User::create($val);
         }
     }
 }

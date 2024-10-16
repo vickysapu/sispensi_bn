@@ -20,23 +20,31 @@
                             </div>
 
                             @if ($errors->any())
-                                <div class="alert alert-danger">
-                                    @foreach ($errors->all() as $item)
-                                        <p>{{ $item }}</p>
-                                    @endforeach
-                                </div>
+                            <div class="alert alert-danger">
+                                @foreach ($errors->all() as $item)
+                                <p>{{ $item }}</p>
+                                @endforeach
+                            </div>
                             @endif
 
-                            <form action="{{ route('login') }}" method="POST">
+                            @if (session('error'))
+                            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                                {{ session('error') }}
+                                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                    <span aria-hidden="true">&times;</span>
+                                </button>
+                            </div>
+                            @endif
+                            <form action="{{ route('sipensi.login') }}" method="POST">
                                 @csrf
                                 <div class="form-group">
                                     <label for="username">User Name</label>
-                                    <input type="text" class="form-control" id="username" placeholder="(Guru Piket, Kesiswaan, Wali Kelas)">
+                                    <input type="text" class="form-control" id="username" name="username" placeholder="(Guru Piket, Kesiswaan, Wali Kelas, Kepala Sekolah)">
                                 </div>
                                 <div class="form-group">
                                     <label for="password">Password (Kode Keamanan)</label>
                                     <div class="input-group">
-                                        <input type="password" class="form-control" id="password" name="keamanan" placeholder="Password">
+                                        <input type="password" class="form-control" id="password" name="password" placeholder="Password">
                                         <div class="input-group-append">
                                             <button type="button" class="btn btn-outline-secondary" id="togglePassword">
                                                 <i class="fa fa-eye"></i>

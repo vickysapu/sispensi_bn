@@ -12,10 +12,13 @@ class walikelas extends Model
 
     public function jurusan()
     {
-        return $this->belongsTo(Jurusan::class, 'kode_jurusan', 'kode_jurusan');
+        return $this->belongsTo(jurusan::class, 'kode_jurusan', 'kode_jurusan');
     }
+
     public function students()
     {
-        return $this->hasMany(student::class, 'kode_jurusan', 'kode_jurusan')->where('kelas', $this->kelas);
+        return $this->hasMany(Student::class, 'kelas', 'kelas')
+                    ->where('kode_jurusan', $this->kode_jurusan);
     }
+
 }
