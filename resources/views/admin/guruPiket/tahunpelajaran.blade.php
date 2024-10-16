@@ -12,9 +12,13 @@
                         <div class="col-12">
                             <div class="card">
                                 <div class="col-sm-12">
-                                    <button type="button" class="mt-3 btn btn-primary" data-bs-toggle="modal" data-bs-target="#exampleModal">
+                                    @if (session('username') == 'Guru Piket')
+                                    @else
+                                    <label type="button" class="mt-3 btn btn-primary" data-bs-toggle="modal" data-bs-target="#exampleModal">
                                         Tambahkan
-                                    </button>
+                                    </label>
+                                    @endif
+
 
                                     <div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
                                         <div class="modal-dialog">
@@ -95,8 +99,12 @@
                                             <tr>
                                                 <th class="sorting" tabindex="0" aria-controls="example2" rowspan="1" colspan="1">Tahun Pelajaran</th>
                                                 <th class="sorting" tabindex="0" aria-controls="example2" rowspan="1" colspan="1">Semester</th>
+                                                @if (session('username') == 'Guru Piket')
+
+                                                @else
                                                 <th class="sorting" tabindex="0" aria-controls="example2" rowspan="1" colspan="1">Status</th>
                                                 <th class="sorting" tabindex="0" aria-controls="example2" rowspan="1" colspan="1">Aksi</th>
+                                                @endif
                                             </tr>
                                         </thead>
                                         <tbody>
@@ -110,13 +118,25 @@
                                                     {{ $data->semester }} (Genap)
                                                     @endif
                                                 </td>
+                                                @if (session('username') == 'Guru Piket')
+                                                <td>
+                                                    <label href="#" class="btn {{ $data->status == 1 ? 'btn-success' : 'btn-danger' }}">
+                                                        {{ $data->status == 1 ? 'Aktif' : 'Tidak Aktif' }}
+                                                    </label>
+                                                </td>
+                                                @else
                                                 <td>
                                                     <a href="#" class="btn {{ $data->status == 1 ? 'btn-success' : 'btn-danger' }}"
                                                         onclick="toggleStatus({{ $data->id }}, {{ $data->status }})">
                                                         {{ $data->status == 1 ? 'Aktif' : 'Tidak Aktif' }}
                                                     </a>
                                                 </td>
-
+                                                <td>
+                                                    <a class="btn btn-danger" href="{{ route('tahunpelajaran.hapus', $data->id) }}">
+                                                        <i class="fa fa-trash"></i>
+                                                    </a>
+                                                </td>
+                                                @endif
                                                 <script>
                                                     function toggleStatus(id, currentStatus) {
                                                         const newStatus = currentStatus === 1 ? 0 : 1;
@@ -132,17 +152,11 @@
                                                                 location.reload(); // Reload the page to see the updated status
                                                             },
                                                             error: function(xhr) {
-                                                                console.error(xhr.responseText); 
+                                                                console.error(xhr.responseText);
                                                             }
                                                         });
                                                     }
                                                 </script>
-
-                                                <td>
-                                                    <a class="btn btn-danger" href="Hapus">
-                                                        <i class="fa fa-trash"></i>
-                                                    </a>
-                                                </td>
                                             </tr>
                                             @endforeach
 

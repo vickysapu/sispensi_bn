@@ -3,9 +3,15 @@
 namespace App\Http\Controllers;
 
 use App\Imports\ImportDataSiswa;
+use App\Models\absensi;
+use App\Models\datapelangaran;
+use App\Models\datapiket;
 use Illuminate\Http\Request;
 use App\Models\student;
 use App\Models\jurusan;
+use App\Models\pelanggaran;
+use App\Models\walikelas;
+use Illuminate\Support\Facades\DB;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Log;
@@ -75,6 +81,16 @@ class studentController extends Controller
         $jurusan = $request->input('kode_jurusan');
         $search = $request->input('search');
 
+        $penggunasiswa = null;
+
+        if (session('datawalikelas')) {
+            $datapengguna = session('datawalikelas');
+
+            $penggunasiswa = student::where('kelas', $datapengguna->kelas)
+                ->where('kode_jurusan', $datapengguna->kode_jurusan)
+                ->paginate(10);
+        }
+
         $query = student::query();
 
         if ($kelas) {
@@ -90,7 +106,6 @@ class studentController extends Controller
         }
 
         $indexdatasiswa = $query->paginate(10);
-
         $totaldatasiswa = student::count();
 
         $editModalId = session('edit_modal_id');
@@ -99,13 +114,20 @@ class studentController extends Controller
         $previewModalNis = session('preview_modal_nis');
         $previewdatasiswa = $previewModalNis ? student::where('nis', $previewModalNis)->first() : null;
 
-        return view('admin.guruPiket.dataSiswa', compact('indexdatasiswa', 'editdatasiswa', 'previewdatasiswa', 'totaldatasiswa', 'alldatasiswa', 'datajurusan'));
+        return view('admin.guruPiket.dataSiswa', compact('indexdatasiswa', 'editdatasiswa', 'previewdatasiswa', 'totaldatasiswa', 'alldatasiswa', 'datajurusan', 'penggunasiswa'));
     }
+
 
     public function hapus($nis)
     {
-        $hapusdatasiswa = student::find($nis);
+        $hapusdatasiswa = student::where('nis', $nis);
         $hapusdatasiswa->delete();
+
+        $hapuspelanggaran = pelanggaran::where('nis', $nis);
+        $hapuspelanggaran->delete();
+
+        $hapusabsen = absensi::where('nis', $nis);
+        $hapusabsen->delete();
 
         return redirect()->route('datasiswa.index');
     }
@@ -158,22 +180,23 @@ class studentController extends Controller
     public function import(Request $request)
     {
         $request->validate([
-            'file_import' => 'required|mimes:xlsx,xls,svg'
+            'file_import' => 'required|mimes:xlsx,xls,csv|max:2048',
         ]);
 
         if ($request->hasFile('file_import')) {
-            $filePath = $request->file('file_import')->store('temp');
+            try {
+                Excel::import(new ImportDataSiswa, $request->file('file_import'));
 
-            // Import data
-            Excel::import(new ImportDataSiswa, $filePath);
+                return redirect()->route('datasiswa.index')->with('success', 'Data siswa berhasil diimpor!');
+            } catch (\Exception $e) {
+                Log::error('Import Error: ' . $e->getMessage());
 
-            // Set success message
-            return redirect()->route('datasiswa.index')->with('success', 'Data siswa berhasil diimpor!');
-        } else {
-            return redirect()->back()->with('error', 'Tidak ada file yang diupload.');
+                return redirect()->back()->with('error', 'Gagal mengimpor data: ' . $e->getMessage());
+            }
         }
-    }
 
+        return redirect()->back()->with('error', 'Tidak ada file yang diupload.');
+    }
     private function convertRomanToInteger($roman)
     {
         $romans = [
@@ -193,6 +216,66 @@ class studentController extends Controller
         Log::info('Kode jurusan untuk ' . $namaJurusan . ' adalah: ' . ($jurusan ? $jurusan->kode_jurusan : 'Not found'));
         return $jurusan ? $jurusan->kode_jurusan : null;
     }
+
+    public function indexdashboard()
+    {
+        if (session('datawalikelas')) {
+            $datapengguna = session('datawalikelas');
+
+            $datasiswa_walikelas = pelanggaran::with('walikelassiswa.jurusan')
+                ->whereHas('walikelassiswa', function ($query) use ($datapengguna) {
+                    $query->where('kelas', $datapengguna->kelas)
+                          ->where('kode_jurusan', $datapengguna->kode_jurusan);
+                })
+                ->get();
+
+            $count_kelas_walikelas = $datasiswa_walikelas->count();
+        } else {
+            $datasiswa_walikelas = collect();
+            $count_kelas_walikelas = 0;
+        }
+
+        $count_kelas = jurusan::count();
+        $count_siswa = student::count();
+        $count_pelanggaran = pelanggaran::count();
+        $count_walikelas = walikelas::count();
+
+        $currentDay = now()->format('d');
+        $datapiket = datapiket::where('hari_piket', $currentDay)->get();
+
+        $dataasli = pelanggaran::all();
+        $diagram = [];
+
+        if ($dataasli->isNotEmpty()) {
+            $pelanggaranCounts = pelanggaran::whereMonth('created_at', now()->format('m'))
+                ->select('id_pelanggaran', DB::raw('count(*) as total'))
+                ->groupBy('id_pelanggaran')
+                ->get();
+
+            $diagram = $pelanggaranCounts->map(function ($item) {
+                $jenisPelanggaran = datapelangaran::find($item->id_pelanggaran)->jenis_pelanggaran ?? 'Unknown';
+                return [
+                    'jenis_pelanggaran' => $jenisPelanggaran,
+                    'total' => $item->total,
+                ];
+            });
+        }
+
+        return view('layout.content', compact(
+            'datasiswa_walikelas',
+            'count_kelas',
+            'count_siswa',
+            'count_pelanggaran',
+            'count_walikelas',
+            'count_kelas_walikelas',
+            'diagram',
+            'datapiket',
+            'dataasli'
+        ));
+    }
+
+
+
     public function export()
     {
         $spreadsheet = new Spreadsheet();

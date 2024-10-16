@@ -8,10 +8,15 @@ use Illuminate\Database\Eloquent\Model;
 class jurusan extends Model
 {
     use HasFactory;
-    protected $fillable = ['kode_jurusan', 'nama_jurusan','kepanjangan_jurusan'];
+    protected $fillable = ['kode_jurusan', 'nama_jurusan', 'kepanjangan_jurusan'];
 
-    public function students()
+    public function student()
     {
-        return $this->hasMany(Student::class, 'kode_jurusan', 'kode_jurusan');
+        return $this->belongsTo(student::class, 'kode_jurusan', 'kode_jurusan');
+    }
+
+    public function walikelas()
+    {
+        return $this->belongsTo(walikelas::class, 'kode_jurusan', 'kode_jurusan');
     }
 }

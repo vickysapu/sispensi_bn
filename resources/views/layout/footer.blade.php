@@ -29,15 +29,73 @@
 <script src="{{ asset('template/') }}/plugins/summernote/summernote-bs4.min.js"></script>
 <!-- overlayScrollbars -->
 <script src="{{ asset('template/') }}/plugins/overlayScrollbars/js/jquery.overlayScrollbars.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <!-- AdminLTE App -->
 <script src="{{ asset('template/') }}/dist/js/adminlte.js"></script>
 <!-- AdminLTE for demo purposes -->
 <script src="{{ asset('template/') }}/dist/js/demo.js"></script>
-<!-- AdminLTE dashboard demo (This is only for demo purposes) -->
-<script src="{{ asset('template/') }}/dist/js/pages/dashboard.js"></script>
+<script src="{{ asset('template/') }}/dist/js/pages/dashboard.js"></script>{{-- calender --}}
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/locales/id.js"></script>
 
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+    document.querySelector('.download-btn').addEventListener('click', function() {
+        Swal.fire({
+            position: "top-end",
+            icon: "success",
+            title: "Your file is downloading",
+            showConfirmButton: false,
+            timer: 1500
+        });
+    });
+</script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        var calendarEl = document.getElementById('calendar');
+
+        var calendar = new FullCalendar.Calendar(calendarEl, {
+            initialView: 'dayGridMonth',
+            locale: 'id', // Mengatur bahasa menjadi Indonesia
+            headerToolbar: {
+                left: 'prev,next today',
+                center: 'title',
+                right: '',
+            },
+            buttonText: {
+                today: 'Hari Ini', // Mengubah label tombol "Today" menjadi "Hari Ini"
+            },
+            customButtons: {
+                prev: {
+                    text: '‹',
+                    click: function() {
+                        calendar.prev();
+                    }
+                },
+                next: {
+                    text: '›',
+                    click: function() {
+                        calendar.next();
+                    }
+                }
+            },
+            contentHeight: 'auto',
+            themeSystem: 'bootstrap',
+        });
+
+        calendar.render();
+
+        const calendarHeader = calendarEl.querySelector('.fc-header-toolbar');
+        calendarHeader.querySelectorAll('.fc-prev-button, .fc-next-button, .fc-today-button').forEach(btn => {
+            btn.classList.add('btn', 'btn-sm');
+        });
+        calendarHeader.querySelector('.fc-toolbar-title').classList.add('h6');
+    });
+</script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-{{-- calender --}}
 <script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.js"></script>
 <script>
     document.addEventListener('DOMContentLoaded', function() {
@@ -46,7 +104,7 @@
         var calendar = new FullCalendar.Calendar(calendarEl, {
             initialView: 'dayGridMonth',
             headerToolbar: {
-                left: 'prev,next today',
+                left: 'prev,next',
                 center: 'title',
                 right: '',
             },
@@ -87,7 +145,7 @@
     });
 </script>
 <script>
-    setTimeout(function () {
+    setTimeout(function() {
         var alertElement = document.getElementById('success-alert');
         if (alertElement) {
             alertElement.remove();
@@ -96,14 +154,36 @@
 
     let progressBar = document.getElementById('progress-bar');
     let width = 100;
-    let interval = setInterval(function () {
+    let interval = setInterval(function() {
         if (width <= 0) {
             clearInterval(interval);
         } else {
             width -= 1;
             progressBar.style.width = width + '%';
         }
-    }, 30);  
+    }, 30);
+</script>
+<script>
+    const scrollableDiv = document.getElementById('scrollableDiv');
+
+    function showCustomScrollbar() {
+        scrollableDiv.style.scrollbarWidth = 'thin';
+        scrollableDiv.style.setProperty('--scrollbar-width', '8px');
+
+        scrollableDiv.style.setProperty('--scrollbar-color', 'black transparent');
+        scrollableDiv.style.setProperty('--scrollbar-radius', '5px');
+
+        clearTimeout(scrollableDiv.scrollTimer);
+
+        scrollableDiv.scrollTimer = setTimeout(function() {
+            scrollableDiv.style.setProperty('--scrollbar-width', '0px');
+        }, 1000);
+    }
+
+    scrollableDiv.addEventListener('scroll', showCustomScrollbar);
+
+    scrollableDiv.style.setProperty('--scrollbar-width', '0px');
+    scrollableDiv.style.scrollbarWidth = 'none';
 </script>
 
 

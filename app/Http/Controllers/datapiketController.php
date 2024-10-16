@@ -6,6 +6,9 @@ use Illuminate\Http\Request;
 use App\Models\datapiket;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
+use Ramsey\Uuid\Uuid;
+use App\Models\User;
 
 class datapiketController extends Controller
 {
@@ -20,6 +23,16 @@ class datapiketController extends Controller
             $adddatapiket->nama_guru = $guru;
             $adddatapiket->hari_piket = $request->input('hari_piket');
             $adddatapiket->save();
+
+            $addusergp = new User();
+            $role = "Guru Piket";
+
+            $addusergp->username = $role;
+            $addusergp->nama_pengguna = $guru;
+
+            $addusergp->password = substr(Uuid::uuid4()->toString(), 0, 5);
+
+            $addusergp->save();
         }
 
         return redirect()->route('datapiket.index')->with('success', 'datapiket added successfully!');
@@ -49,9 +62,17 @@ class datapiketController extends Controller
 
     public function hapus($hari_piket)
     {
+        $datapiket = datapiket::where('hari_piket', $hari_piket)->get();
+
         datapiket::where('hari_piket', $hari_piket)->delete();
 
-        return redirect()->route('datapiket.index')->with('success', 'Data piket deleted successfully!');
+        foreach ($datapiket as $data) {
+            $trimmed_guru = trim($data->nama_guru);
+
+            User::where('nama_pengguna', $trimmed_guru)->delete();
+        }
+
+        return redirect()->route('datapiket.index')->with('success', 'Data piket and related users deleted successfully!');
     }
 
     public function edit($hari_piket)
@@ -66,29 +87,49 @@ class datapiketController extends Controller
         }
 
         return redirect()->route('datapiket.index');
+    }   
+
+public function update(Request $request, $hari_piket)
+{
+    $validator = Validator::make($request->all(), [
+        'nama_guru' => 'required|array',
+        'nama_guru.*' => 'string',
+        'hari_piket' => 'required|string',
+    ]);
+
+    if ($validator->fails()) {
+        return redirect()->back()->withErrors($validator)->withInput();
     }
 
-    public function update(Request $request, $hari_piket)
-    {
-        $validator = Validator::make($request->all(), [
-            'nama_guru' => 'required|string',
-        ]);
+    $datapiket = Datapiket::where('hari_piket', $hari_piket)->first();
 
-        if ($validator->fails()) {
-            return redirect()->back()->withErrors($validator)->withInput();
-        }
+    if (!$datapiket) {
+        return redirect()->back()->with('error', 'Data tidak ditemukan.');
+    }
 
-        $nama_gurus = explode(',', $request->input('nama_guru'));
+    $datapiket->nama_guru = implode(',', array_map('trim', $request->input('nama_guru')));
+    $datapiket->hari_piket = $request->input('hari_piket');
+    $datapiket->save();
 
-        datapiket::where('hari_piket', $hari_piket)->delete();
+    foreach ($request->input('nama_guru') as $nama_guru) {
+        $trimmedGuru = trim($nama_guru);
+        $user = User::where('nama_pengguna', $trimmedGuru)->first();
 
-        foreach ($nama_gurus as $nama_guru) {
-            datapiket::create([
-                'nama_guru' => trim($nama_guru),
-                'hari_piket' => $hari_piket,
+        if ($user) {
+
+            $user->nama_pengguna = $trimmedGuru;
+            $user->save();
+        } else {
+            $userPassword = substr(Str::uuid(), 0, 5);
+            User::create([
+                'username' => 'Guru Piket',
+                'password' => $userPassword,
+                'nama_pengguna' => $trimmedGuru,
             ]);
         }
-
-        return redirect()->route('datapiket.index')->with('success', 'Data piket updated successfully!');
     }
+
+    return redirect()->route('datapiket.index')->with('success', 'Data berhasil diperbarui!');
+}
+
 }

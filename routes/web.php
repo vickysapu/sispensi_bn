@@ -7,18 +7,21 @@ use App\Http\Controllers\walikelasController;
 use App\Http\Controllers\datapiketController;
 use App\Http\Controllers\sekolahController;
 use App\Http\Controllers\absensiController;
+use App\Http\Controllers\datapelangaranController;
+use App\Http\Controllers\pdfController;
+use App\Http\Controllers\pelanggaranController;
 use App\Http\Controllers\tahunpelajaranController;
 use App\Http\Controllers\penggunaloginController;
+use Illuminate\Routing\RouteRegistrar;
+use App\Http\Controllers\suratizinController;
 
-Route::get('/',
- function () {
+use function PHPUnit\Framework\returnSelf;
+
+Route::GET('/', function () {
     return view('login');
-})->name('dashboard');
+});
 
-Route::get('/sipensi/dashboard',
- function () {
-    return view('layout.content');
-})->name('dashboard');
+Route::get('/sipensi/dashboard', [studentController::class, 'indexdashboard'])->name('dashboard');
 
 //jurusan route
 Route::POST('/sipensi/dashboard/data-jurusan/tambah', [jurusanController::class, 'add'])->name('jurusan.add');
@@ -63,11 +66,46 @@ Route::get('/sipensi/dashboard/data-siswa/export-data-siswa', [studentController
 Route::POST('/sipensi/dashboard/absensi/', [absensiController::class, 'absen'])->name('absensi.absen');
 Route::GET('/sipensi/dashboard/absensi/tampil', [absensiController::class, 'index'])->name('absensi.index');
 Route::GET('/sipensi/dashboard/absensi/tampil/absen-kelas/{id}', [absensiController::class, 'absenkelas'])->name('absensi.absenkelas');
+Route::GET('/sipensi/dashboard/absensi/tampil/absen-kelas/cek/{id}', [absensiController::class, 'absentampilcek'])->name('absensi.absentampilcek');
 
+//pelanggaran-siswa route
+Route::GET('/sipensi/dashboard/data-pelanggaran-siswa', [pelanggaranController::class, 'index'])->name('pelanggaransiswa.index');
+Route::GET('/sipensi/dashboard/pelanggaran-siswa-data', [pelanggaranController::class, 'indexps'])->name('pelanggaransiswadata.indexps');
+Route::POST('/sipensi/dashboard/data-pelanggaran-siswa/tambah', [pelanggaranController::class, 'add'])->name('pelanggaransiswa.add');
+Route::GET('/sipensi/dashboard/data-pelanggaran/rekap-data', [pelanggaranController::class,'rekappelanggaran'])->name('pelanggaransiswa.rekap');
+
+//data-pelanggaran route
+Route::POST('/sipensi/dashboard/data-pelanggaran/tambah', [datapelangaranController::class, 'add'])->name('datapelanggaran.add');
+Route::GET('/sipensi/dashboard/data-pelanggaran/tampil', [datapelangaranController::class, 'index'])->name('datapelanggaran.index');
+Route::GET('/sipensi/dashboard/data-pelanggaran/hapus/{id}', [datapelangaranController::class, 'hapus'])->name('datapelanggaran.hapus');
+Route::GET('/sipensi/dashboard/data-pelanggaran/edit/{id}', [datapelangaranController::class, 'edit'])->name('datapelanggaran.edit');
+Route::PUT('/sipensi/dashboard/data-pelanggaran/update-data/{id}', [datapelangaranController::class, 'update'])->name('datapelanggaran.update');
 //tahun-pelajaran route
 Route::get('/sipensi/dashboard/data-tahun-pelajaran/tampil', [tahunpelajaranController::class, 'index'])->name('tahunpelajaran.index');
 Route::post('/sipensi/dashboard/data-tahun-pelajaran/tambah', [tahunpelajaranController::class, 'add'])->name('tahunpelajaran.add');
 Route::put('/sipensi/dashboard/data-tahun-pelajaran/pengaktifan/{id}', [tahunpelajaranController::class, 'toggleStatus'])->name('tahunpelajaran.toggleStatus');
+Route::GET('/sipensi/dashboard/data-tahun-pelajaran/hapus/{id}', [tahunpelajaranController::class,'hapus'])->name('tahunpelajaran.hapus');
 
-//login route
-Route::post('/sipensi/login', [penggunaloginController::class, 'login'])->name('login');
+// Login route
+Route::post('/sipensi/login', [penggunaloginController::class, 'login'])->name('sipensi.login');
+Route::GET('/sipensi/login/guru-piket', [penggunaloginController::class,'lgp'])->name('lgp');
+Route::get('/logout', [penggunaloginController::class, 'logout'])->name('logout');
+Route::GET('/sipensi/halaman-absen', [penggunaloginController::class,'indexGP'])->name('halaman.absen.index');
+
+//datapengguna route
+Route::GET('/sipensi/dashboard/data-pengguna/tampil', [penggunaloginController::class, "datapenggunaindex"])->name("datapengguna.index");
+Route::POST('/sipensi/dashboard/data-pengguna/tampil/update/{id}', [penggunaloginController::class,'passwordupdate'])->name('password.update');
+Route::POST('/sipensi/dashboard/data-pengguna-inti/update/{id}', [penggunaloginController::class,'updatepenggunainti'])->name('edit.penggunaInti');
+
+//pdf route
+Route::get('/generate-pdf/data-pelanggaran', [pdfController::class, 'generatePS'])->name('generate.pelanggaran');
+Route::get('/generate-pdf', [pdfController::class, 'generatePDF'])->name('generate.pdf');
+Route::get('/generate-pdf/wali-kelas/{id}', [pdfController::class, 'generatePDFwalikelas'])->name('generate.pdfwalikelas');
+Route::get('/sipesi/dasboard/rekap-data-absen', [pdfController::class, 'tampilAbsensi'])->name('absenrekapan');
+Route::GET('/sipensi/dashboard/rekap-data-absen/hapus/{id}', [pdfController::class, 'hapus'])->name('rekap.hapus');
+
+//surat-izin route
+Route::GET('/sipensi/dashboard/surat-izin/tampil', [suratizinController::class, 'index'])->name('suratizin.index');
+Route::POST('/sipensi/dashboard/surat-izin/cetak', [suratizinController::class, 'cetak'])->name('suratizin.cetak');
+
+

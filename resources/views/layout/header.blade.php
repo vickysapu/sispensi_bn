@@ -4,9 +4,18 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+
     <title>SIPENSI - SMK BN</title>
+    @php
+        $logos = App\Models\sekolah::all();
+    @endphp
+    @foreach ($logos as $logos)
+        <link rel="icon" href="{{ asset('logo/' . $logos->logo_sekolah) }}">
+    @endforeach
 
     @vite(['resources/sass/app.scss', 'resources/js/app.js'])
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
 
     <!-- Google Font: Source Sans Pro -->
     <link rel="stylesheet"
